@@ -169,27 +169,41 @@ var API = 'https://script.google.com/macros/s/AKfycbzf_fyzLRZzx8fMTSs9hQOjdoDVW8
 var MN=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 var D=null, busy=false, AUTH=null, KEY='loanAuth_v4', _n=0;
 
-/* JSONP — no CORS, no Google account routing, works from any host */
-function api(action,params,noAuth){
+/* Data calls: fetch() first — it sends NO cookies cross-origin, so Google
+   cannot rewrite the URL to /u/1/ and the multi-account problem disappears.
+   JSONP is kept as a fallback in case CORS is ever blocked. */
+function buildUrl(action,params,auth){
+  var q=['action='+encodeURIComponent(action),'t='+Date.now()];
+  if(auth){q.push('pass='+encodeURIComponent(auth.p));
+           q.push('who='+encodeURIComponent(auth.n||''));}
+  if(params)for(var k in params){if(params[k]!==null&&params[k]!==undefined)
+    q.push(k+'='+encodeURIComponent(params[k]));}
+  return API+'?'+q.join('&');
+}
+function viaFetch(url){
+  return fetch(url,{method:'GET',credentials:'omit',redirect:'follow'})
+    .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.text();})
+    .then(function(t){return JSON.parse(t);});
+}
+function viaJsonp(url){
   return new Promise(function(res,rej){
-    var cb='__lt'+(_n++)+'_'+Date.now();
-    var q=['action='+encodeURIComponent(action),'callback='+cb];
-    var a=noAuth||AUTH;
-    if(a){q.push('pass='+encodeURIComponent(a.p));q.push('who='+encodeURIComponent(a.n||''));}
-    if(params)for(var k in params){if(params[k]!==null&&params[k]!==undefined)
-      q.push(k+'='+encodeURIComponent(params[k]));}
+    var cb='__lt'+(_n++)+'_'+Date.now(), done=false;
     var s=document.createElement('script');
-    var done=false;
-    var t=setTimeout(function(){if(!done){done=true;cleanup();rej(new Error('Timed out — check your connection'));}},25000);
-    function cleanup(){clearTimeout(t);try{delete window[cb];}catch(e){window[cb]=undefined;}
+    var tm=setTimeout(function(){fail('Timed out — check your connection');},25000);
+    function cleanup(){clearTimeout(tm);try{delete window[cb];}catch(e){window[cb]=undefined;}
       if(s.parentNode)s.parentNode.removeChild(s);}
-    window[cb]=function(d){if(done)return;done=true;cleanup();
-      if(d&&d.error)rej(new Error(d.error));else res(d);};
-    s.onerror=function(){if(done)return;done=true;cleanup();
-      rej(new Error('Could not reach the data server'));};
-    s.src=API+'?'+q.join('&');
+    function fail(m){if(done)return;done=true;cleanup();rej(new Error(m));}
+    window[cb]=function(d){if(done)return;done=true;cleanup();res(d);};
+    s.onerror=function(){fail('Could not reach the data server');};
+    s.src=url+'&callback='+cb;
     document.body.appendChild(s);
   });
+}
+function api(action,params,noAuth){
+  var url=buildUrl(action,params,noAuth||AUTH);
+  return viaFetch(url)
+    .catch(function(){ return viaJsonp(url); })
+    .then(function(d){ if(d&&d.error)throw new Error(d.error); return d; });
 }
 
 function money(n){return (Math.round(n*100)/100).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',');}
