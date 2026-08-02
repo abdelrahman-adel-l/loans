@@ -1,2 +1,395 @@
-This file is no longer used.
-Delete Index.html from the Apps Script project — the page now lives in netlify-site/index.html.
+<!DOCTYPE html>
+<html><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+:root{color-scheme:light}
+*{box-sizing:border-box}
+body{margin:0;padding:16px;background:#f5f6f8;color:#16181d;
+ font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;font-size:14px;line-height:1.5}
+.wrap{max-width:1080px;margin:0 auto}
+h1{font-size:19px;margin:0;font-weight:650;letter-spacing:-.2px}
+.sub{color:#6b7280;font-size:12px;margin:2px 0 3px}
+.who{color:#9aa1ab;font-size:11px;margin-bottom:15px}
+.who a{color:#6b7280;cursor:pointer;text-decoration:underline}
+.card{background:#fff;border:1px solid #e3e6ea;border-radius:12px;padding:15px 17px;margin-bottom:13px}
+.hero{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:13px}
+.hero .card{flex:1;min-width:165px;margin:0}
+.lbl{font-size:10.5px;text-transform:uppercase;letter-spacing:.7px;color:#6b7280;font-weight:650;margin-bottom:5px}
+.big{font-size:25px;font-weight:680;letter-spacing:-.6px;line-height:1.15}
+.big small{font-size:12px;font-weight:500;color:#6b7280;letter-spacing:0}
+.red{color:#b3261e}.grn{color:#1e7a4d}
+.meta{color:#6b7280;font-size:11.5px;margin-top:4px}
+.meta.warn{color:#b3261e;font-weight:600}
+.bar{height:9px;background:#eaecf0;border-radius:99px;overflow:hidden;margin:9px 0 5px}
+.bar>i{display:block;height:100%;background:linear-gradient(90deg,#2f7d5c,#55b98a);border-radius:99px;transition:width .3s}
+h2{font-size:12px;text-transform:uppercase;letter-spacing:.8px;color:#6b7280;font-weight:650;margin:0}
+.hd{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:13px;flex-wrap:wrap}
+.plans{display:flex;flex-wrap:wrap;gap:10px}
+.pl{flex:1;min-width:172px;border:1px solid #e3e6ea;border-radius:10px;padding:11px 13px}
+.pl .nm{font-weight:650;font-size:13.5px;display:flex;align-items:center;gap:6px}
+.dot{width:8px;height:8px;border-radius:99px;flex:none}
+.pl .amt{font-size:17px;font-weight:660;letter-spacing:-.3px;margin-top:2px}
+.pl .mini{height:5px;background:#eaecf0;border-radius:99px;margin:7px 0 8px;overflow:hidden}
+.pl .mini>i{display:block;height:100%;border-radius:99px}
+.done{background:#f2faf5;border-color:#bfe3ce}
+.tag{font-size:10px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;
+ padding:2px 6px;border-radius:5px;background:#dcf0e5;color:#1e7a4d;margin-left:auto}
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;font-size:13px}
+th{text-align:right;font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280;
+ font-weight:650;padding:0 6px 8px;border-bottom:1px solid #e3e6ea;white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+th.c,td.c{text-align:center}
+td{padding:0;border-bottom:1px solid #f2f3f5;text-align:right;white-space:nowrap}
+td.m{padding:8px 6px;font-weight:600}
+tr.done-row{background:#f7fdf9}
+tr.next-row td{background:#fff8e4}
+.cellbtn{display:flex;align-items:center;justify-content:flex-end;gap:6px;width:100%;border:0;
+ background:none;font:inherit;padding:8px 6px;cursor:pointer;color:#16181d;border-radius:6px;
+ font-variant-numeric:tabular-nums;transition:background .12s}
+.cellbtn:hover{background:#eaeef3}
+.cellbtn:active{background:#dde3ea}
+.box{width:14px;height:14px;border:1.5px solid #c2c8d0;border-radius:4px;flex:none;
+ position:relative;background:#fff;transition:.12s}
+.cellbtn:hover .box{border-color:#8c949f}
+.cellbtn.p .box{background:#2f7d5c;border-color:#2f7d5c}
+.cellbtn.s .box{background:#1668b8;border-color:#1668b8}
+.cellbtn.p .box:after,.cellbtn.s .box:after{content:'';position:absolute;left:4px;top:1px;
+ width:4px;height:8px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(43deg)}
+.cellbtn.p .num,.cellbtn.s .num{color:#98a0aa;text-decoration:line-through}
+.cellbtn.n{cursor:default;color:#d3d7dc}
+.cellbtn.n:hover{background:none}
+.tot{font-weight:680;padding:8px 6px}
+.rowchk{width:19px;height:19px;accent-color:#2f7d5c;cursor:pointer;margin:0}
+button.b{border:1px solid #d5d9df;background:#fff;border-radius:8px;padding:6px 12px;font-size:12.5px;
+ font-family:inherit;color:#374151;cursor:pointer;font-weight:550}
+button.b:hover{background:#f5f6f8}
+button.b.pri{background:#16181d;color:#fff;border-color:#16181d}
+button.b.pri:hover{background:#33373f}
+button.b.sm{padding:3px 9px;font-size:11.5px;border-radius:6px}
+input,select{font:inherit;font-size:13px;padding:8px 10px;border:1px solid #d5d9df;border-radius:8px;
+ background:#fff;color:#16181d;width:100%}
+.frm{display:none;gap:9px;flex-wrap:wrap;margin-top:13px;padding-top:13px;border-top:1px solid #eef0f2}
+.frm.on{display:flex}
+.fld{flex:1;min-width:118px}
+.fld label{display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;
+ color:#6b7280;font-weight:650;margin-bottom:4px}
+.key{font-size:11px;color:#9aa1ab;display:flex;gap:14px;flex-wrap:wrap;margin-top:11px}
+.key i{width:11px;height:11px;border-radius:3px;display:inline-block;vertical-align:-1px;margin-right:4px}
+.foot{color:#9aa1ab;font-size:11px;text-align:center;margin:14px 0 4px}
+#toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(80px);background:#16181d;
+ color:#fff;padding:10px 17px;border-radius:9px;font-size:13px;opacity:0;transition:.25s;
+ pointer-events:none;z-index:9;max-width:88vw;text-align:center}
+#toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+#load{text-align:center;padding:60px 0;color:#9aa1ab}
+.spin{display:inline-block;width:22px;height:22px;border:2.5px solid #e3e6ea;border-top-color:#9aa1ab;
+ border-radius:99px;animation:sp .7s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.busy{opacity:.5;pointer-events:none}
+/* lock screen */
+#lock{max-width:330px;margin:8vh auto 0;text-align:center}
+#lock .card{padding:26px 24px}
+#lock h1{font-size:21px;margin-bottom:4px}
+#lock p{color:#6b7280;font-size:12.5px;margin:0 0 20px}
+#lock .fld{min-width:0;margin-bottom:12px;text-align:left}
+#lock input{text-align:center;font-size:17px;letter-spacing:2px;padding:11px}
+#lock select{font-size:14px}
+#lock button{width:100%;padding:10px}
+.err{color:#b3261e;font-size:12.5px;margin-top:11px;min-height:17px;font-weight:550}
+@media(max-width:660px){body{padding:11px}.big{font-size:21px}.hide-sm{display:none}
+ table{font-size:12px}.cellbtn{padding:9px 3px;gap:4px}}
+</style></head><body>
+
+<div id="lock" style="display:none"><div class="card">
+  <h1>Loan Installments</h1><p>Enter the passcode to continue</p>
+  <div class="fld"><label>Who are you?</label><select id="lName"></select></div>
+  <div class="fld"><label>Passcode</label>
+    <input id="lPass" type="password" autocomplete="current-password" placeholder="••••••••"></div>
+  <button class="b pri" id="lGo">Unlock</button>
+  <div class="err" id="lErr"></div>
+</div></div>
+
+<div class="wrap" id="main" style="display:none">
+  <h1>Loan Installments</h1>
+  <div class="sub" id="sub">Loading…</div>
+  <div class="who" id="who"></div>
+  <div id="load"><div class="spin"></div></div>
+  <div id="app" style="display:none">
+
+    <div class="hero">
+      <div class="card"><div class="lbl">Next payment</div>
+        <div class="big red" id="nAmt"></div><div class="meta" id="nWhen"></div></div>
+      <div class="card"><div class="lbl">Still owed</div>
+        <div class="big" id="rem"></div><div class="meta" id="remM"></div></div>
+      <div class="card"><div class="lbl">Paid off</div>
+        <div class="big grn" id="pct"></div><div class="bar"><i id="fill"></i></div>
+        <div class="meta" id="pctM"></div></div>
+    </div>
+
+    <div class="card">
+      <div class="hd"><h2>Plans</h2><button class="b" id="addBtn">+ Add loan or service</button></div>
+      <div class="plans" id="plans"></div>
+      <div class="frm" id="addFrm">
+        <div class="fld"><label>Name</label><input id="fName" placeholder="e.g. Contact"></div>
+        <div class="fld"><label>Per month</label><input id="fAmt" type="number" step="0.01" placeholder="1500"></div>
+        <div class="fld"><label>Starts</label><input id="fStart" type="month"></div>
+        <div class="fld"><label>Months</label><input id="fN" type="number" min="1" placeholder="12"></div>
+        <div class="fld" style="flex:0 0 auto;display:flex;align-items:flex-end;gap:7px">
+          <button class="b pri" id="fSave">Add</button><button class="b" id="fCancel">Cancel</button></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="hd"><h2>Schedule <span style="color:#9aa1ab;font-weight:500;text-transform:none;letter-spacing:0" id="cnt"></span></h2></div>
+      <div style="overflow-x:auto"><table>
+        <thead><tr id="thead"></tr></thead><tbody id="tb"></tbody></table></div>
+      <div class="key">
+        <span><i style="border:1.5px solid #c2c8d0;background:#fff"></i>not paid — tap it</span>
+        <span><i style="background:#2f7d5c"></i>paid</span>
+        <span><i style="background:#1668b8"></i>cleared by early settlement</span>
+        <span>right-hand box ticks the whole month</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="hd"><h2>Email reminder</h2><button class="b" id="testMail">Send one now</button></div>
+      <div class="meta" id="trigM" style="margin:0"></div>
+    </div>
+
+    <div class="foot">Amounts in <span id="cur"></span> · due on the 1st · shared, saved on Google's servers</div>
+  </div>
+</div>
+<div id="toast"></div>
+
+<script>
+
+/* ═══════════ your Apps Script data URL — change only if you redeploy fresh ═══════════ */
+var API = 'https://script.google.com/macros/s/AKfycbzf_fyzLRZzx8fMTSs9hQOjdoDVW8IFEBXgNJJu-ggUJ8ZFzZZOFuW8ZAphgvDZx_7l5A/exec';
+/* ════════════════════════════════════════════════════════════════════════════════════ */
+
+var MN=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+var D=null, busy=false, AUTH=null, KEY='loanAuth_v4', _n=0;
+
+/* JSONP — no CORS, no Google account routing, works from any host */
+function api(action,params,noAuth){
+  return new Promise(function(res,rej){
+    var cb='__lt'+(_n++)+'_'+Date.now();
+    var q=['action='+encodeURIComponent(action),'callback='+cb];
+    var a=noAuth||AUTH;
+    if(a){q.push('pass='+encodeURIComponent(a.p));q.push('who='+encodeURIComponent(a.n||''));}
+    if(params)for(var k in params){if(params[k]!==null&&params[k]!==undefined)
+      q.push(k+'='+encodeURIComponent(params[k]));}
+    var s=document.createElement('script');
+    var done=false;
+    var t=setTimeout(function(){if(!done){done=true;cleanup();rej(new Error('Timed out — check your connection'));}},25000);
+    function cleanup(){clearTimeout(t);try{delete window[cb];}catch(e){window[cb]=undefined;}
+      if(s.parentNode)s.parentNode.removeChild(s);}
+    window[cb]=function(d){if(done)return;done=true;cleanup();
+      if(d&&d.error)rej(new Error(d.error));else res(d);};
+    s.onerror=function(){if(done)return;done=true;cleanup();
+      rej(new Error('Could not reach the data server'));};
+    s.src=API+'?'+q.join('&');
+    document.body.appendChild(s);
+  });
+}
+
+function money(n){return (Math.round(n*100)/100).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',');}
+function money0(n){return Math.round(n).toLocaleString('en-US');}
+function lbl(ym){var p=ym.split('-');return MN[+p[1]-1]+' '+p[0];}
+function toast(m){var t=document.getElementById('toast');t.textContent=m;t.className='on';
+  clearTimeout(t._x);t._x=setTimeout(function(){t.className='';},2800);}
+function lock(on){busy=on;document.getElementById('app').className=on?'busy':'';}
+function save(a){try{localStorage.setItem(KEY,JSON.stringify(a));}catch(e){}}
+function loadAuth(){try{return JSON.parse(localStorage.getItem(KEY)||'null');}catch(e){return null;}}
+function forget(){try{localStorage.removeItem(KEY);}catch(e){} location.reload();}
+
+function call(action,params,msg){
+  if(busy)return; lock(true);
+  api(action,params).then(function(d){lock(false);D=d;render();if(msg)toast(msg);})
+    .catch(function(e){lock(false);
+      if(/WRONG_PASSCODE/.test(e.message)){forget();return;}
+      toast('Error: '+e.message);});
+}
+function months(){var s={};D.plans.forEach(function(p){p.months.forEach(function(m){s[m[0]]=1;});});
+  return Object.keys(s).sort();}
+function rec(id,ym){return D.paid[id+'|'+ym]||null;}
+function isPaid(id,ym){return !!D.paid[id+'|'+ym];}
+function amtOf(p,ym){for(var i=0;i<p.months.length;i++)if(p.months[i][0]===ym)return p.months[i][1];return 0;}
+
+/* ── unlock ── */
+function showLock(names,msg){
+  document.getElementById('main').style.display='none';
+  document.getElementById('lock').style.display='';
+  var sel=document.getElementById('lName');
+  if(!sel.options.length){
+    (names||['Abdelrahman','Rosari']).forEach(function(n){
+      var o=document.createElement('option');o.value=n;o.textContent=n;sel.appendChild(o);});
+  }
+  document.getElementById('lErr').textContent=msg||'';
+  document.getElementById('lPass').focus();
+}
+function unlock(){
+  var a={p:document.getElementById('lPass').value.trim(),n:document.getElementById('lName').value};
+  if(!a.p){document.getElementById('lErr').textContent='Enter the passcode';return;}
+  document.getElementById('lErr').textContent='Checking…';
+  api('unlock',null,a).then(function(r){
+    if(!r||!r.ok){document.getElementById('lErr').textContent='Wrong passcode';
+      document.getElementById('lPass').value='';return;}
+    AUTH=a; save(a); boot();
+  }).catch(function(e){document.getElementById('lErr').textContent=e.message;});
+}
+document.getElementById('lGo').onclick=unlock;
+document.getElementById('lPass').addEventListener('keydown',function(e){if(e.key==='Enter')unlock();});
+
+function boot(){
+  document.getElementById('lock').style.display='none';
+  document.getElementById('main').style.display='';
+  api('data').then(function(d){D=d;render();})
+    .catch(function(e){
+      if(/WRONG_PASSCODE/.test(e.message)){AUTH=null;try{localStorage.removeItem(KEY);}catch(x){}
+        showLock(null,'Passcode changed — enter the new one');return;}
+      document.getElementById('load').innerHTML='<div style="color:#b3261e">'+e.message+'</div>'+
+        '<div style="margin-top:9px;font-size:12px">Tap to retry</div>';
+      document.getElementById('load').style.cursor='pointer';
+      document.getElementById('load').onclick=function(){location.reload();};});
+}
+
+function render(){
+  document.getElementById('load').style.display='none';
+  document.getElementById('app').style.display='';
+  document.getElementById('cur').textContent=D.currency;
+  document.getElementById('who').innerHTML='Signed in as <b>'+D.me+'</b> · <a id="sw">switch</a>';
+  document.getElementById('sw').onclick=forget;
+
+  var yms=months(), grand=0, left=0, nextYm=null, nextTot=0;
+  D.plans.forEach(function(p){p.months.forEach(function(m){
+    grand+=m[1]; if(!isPaid(p.id,m[0])) left+=m[1];});});
+  yms.forEach(function(ym){
+    if(nextYm)return; var t=0;
+    D.plans.forEach(function(p){if(!isPaid(p.id,ym))t+=amtOf(p,ym);});
+    if(t>0){nextYm=ym;nextTot=t;}});
+
+  document.getElementById('sub').textContent =
+    (yms.length? lbl(yms[0])+' – '+lbl(yms[yms.length-1]) : 'No plans')
+    +' · '+D.plans.length+' plans · '+money0(grand)+' '+D.currency+' total';
+
+  if(nextYm){
+    document.getElementById('nAmt').innerHTML=money(nextTot)+' <small>'+D.currency+'</small>';
+    var q=nextYm.split('-'), dd=new Date(+q[0],+q[1]-1,1), td=new Date(D.today+'T00:00:00');
+    var days=Math.round((dd-td)/864e5), e=document.getElementById('nWhen');
+    e.textContent='1 '+lbl(nextYm)+(days<0?' — overdue by '+(-days)+' days':days===0?' — today':' — in '+days+' days');
+    e.className='meta'+(days<=10?' warn':'');
+  }else{
+    document.getElementById('nAmt').innerHTML='0 <small>'+D.currency+'</small>';
+    document.getElementById('nWhen').textContent='Everything is cleared';
+    document.getElementById('nWhen').className='meta';
+  }
+  var pct=grand?(grand-left)/grand*100:0;
+  document.getElementById('rem').innerHTML=money0(left)+' <small>'+D.currency+'</small>';
+  document.getElementById('remM').textContent=yms.filter(function(ym){
+    return D.plans.some(function(p){return amtOf(p,ym)>0&&!isPaid(p.id,ym);});}).length+' months to go';
+  document.getElementById('pct').textContent=pct.toFixed(1)+'%';
+  document.getElementById('fill').style.width=pct.toFixed(1)+'%';
+  document.getElementById('pctM').textContent=money0(grand-left)+' '+D.currency+' paid so far';
+  document.getElementById('trigM').textContent = D.reminderOn
+    ? 'On — an email goes out on the 25th of each month at 9am with what is due on the 1st.'
+    : 'Off — open the script editor, pick setupReminder in the dropdown, and press Run.';
+
+  var box=document.getElementById('plans'); box.innerHTML='';
+  D.plans.forEach(function(p){
+    var tot=0,rem2=0,open=0;
+    p.months.forEach(function(m){tot+=m[1]; if(!isPaid(p.id,m[0])){rem2+=m[1];open++;}});
+    var st=D.settlements[p.id], fin=open===0, pp=tot?(tot-rem2)/tot*100:0;
+    var d=document.createElement('div'); d.className='pl'+(fin?' done':'');
+    d.innerHTML='<div class="nm"><span class="dot" style="background:'+p.color+'"></span>'+p.name+
+      (fin?'<span class="tag">'+(st?'settled':'done')+'</span>':'')+'</div>'+
+      '<div class="amt">'+(fin?money0(tot)+' <span style="font-size:11px;color:#6b7280;font-weight:500">paid in full</span>'
+        :money0(rem2)+' <span style="font-size:11px;color:#6b7280;font-weight:500">left</span>')+'</div>'+
+      '<div class="mini"><i style="width:'+pp.toFixed(1)+'%;background:'+p.color+'"></i></div>'+
+      '<div class="meta" style="margin:0 0 8px">'+
+        (fin?(st?'Settled '+st.on+(st.by?' by '+st.by:'')+(st.saved>0?' · saved '+money0(st.saved):'')
+                :'All '+p.months.length+' paid')
+            :open+' of '+p.months.length+' left · ends '+lbl(p.months[p.months.length-1][0]))+'</div>'+
+      (st?'<button class="b sm" data-undo="'+p.id+'">Undo settlement</button>'
+         :(open>0?'<button class="b sm" data-set="'+p.id+'">Settle early</button>':''))+
+      ' <button class="b sm" data-del="'+p.id+'" title="Remove plan">&times;</button>';
+    box.appendChild(d);
+  });
+
+  document.getElementById('thead').innerHTML='<th>Month</th>'+
+    D.plans.map(function(p){return '<th>'+p.name+'</th>';}).join('')+
+    '<th>Total</th><th class="hide-sm">Left after</th><th class="c">All</th>';
+  var tb=document.getElementById('tb'); tb.innerHTML=''; var run=0;
+  yms.forEach(function(ym){
+    var tot=0,allPaid=true,any=false;
+    D.plans.forEach(function(p){var a=amtOf(p,ym); if(a>0){any=true;tot+=a; if(!isPaid(p.id,ym))allPaid=false;}});
+    if(!any)return;
+    run+=tot;
+    var tr=document.createElement('tr');
+    tr.className=(allPaid?'done-row':'')+(ym===nextYm?' next-row':'');
+    var h='<td class="m">'+lbl(ym)+'</td>';
+    D.plans.forEach(function(p){
+      var a=amtOf(p,ym);
+      if(!a){h+='<td><span class="cellbtn n">–</span></td>';return;}
+      var r=rec(p.id,ym), cls=r?(r.via==='settlement'?'s':'p'):'';
+      var tip=r?('Paid '+r.on+(r.by?' by '+r.by:'')+(r.via==='settlement'?' (early settlement)':'')):'Tap to mark paid';
+      h+='<td><button class="cellbtn '+cls+'" title="'+tip+'" data-t="'+p.id+'|'+ym+'">'+
+         '<span class="box"></span><span class="num">'+money(a)+'</span></button></td>';
+    });
+    h+='<td class="tot">'+money(tot)+'</td>'+
+       '<td class="hide-sm" style="color:#8b919a;padding:8px 6px">'+money0(grand-run)+'</td>'+
+       '<td class="c" style="padding:8px 6px"><input type="checkbox" class="rowchk" data-mo="'+ym+'"'+
+       (allPaid?' checked':'')+' title="Mark this whole month paid"></td>';
+    tr.innerHTML=h; tb.appendChild(tr);
+  });
+  document.getElementById('cnt').textContent=' — '+yms.length+' months';
+
+  Array.prototype.forEach.call(document.querySelectorAll('[data-t]'),function(b){
+    b.onclick=function(){var k=b.getAttribute('data-t').split('|');
+      call('toggle',{plan:k[0],ym:k[1]});};});
+  Array.prototype.forEach.call(document.querySelectorAll('[data-mo]'),function(b){
+    b.onchange=function(){var ym=b.getAttribute('data-mo');
+      call('month',{ym:ym,paid:b.checked?'1':'0'},lbl(ym)+(b.checked?' marked paid':' cleared'));};});
+  Array.prototype.forEach.call(document.querySelectorAll('[data-set]'),function(b){
+    b.onclick=function(){settle(b.getAttribute('data-set'));};});
+  Array.prototype.forEach.call(document.querySelectorAll('[data-undo]'),function(b){
+    b.onclick=function(){if(confirm('Undo this settlement? Remaining months go back to unpaid.'))
+      call('undo',{plan:b.getAttribute('data-undo')},'Settlement undone');};});
+  Array.prototype.forEach.call(document.querySelectorAll('[data-del]'),function(b){
+    b.onclick=function(){if(confirm('Remove this plan and its history completely?'))
+      call('del',{plan:b.getAttribute('data-del')},'Plan removed');};});
+}
+
+function settle(id){
+  var p=null; D.plans.forEach(function(x){if(x.id===id)p=x;});
+  var sched=0; p.months.forEach(function(m){if(!isPaid(id,m[0]))sched+=m[1];});
+  var a=prompt('Settling '+p.name+' early.\n\nRemaining on schedule: '+money(sched)+' '+D.currency+
+    '\nWhat did you actually pay? (early settlement is usually less)',String(Math.round(sched*100)/100));
+  if(a===null)return;
+  var n=parseFloat(String(a).replace(/,/g,''));
+  if(isNaN(n)||n<0){toast('That is not a valid amount');return;}
+  call('settle',{plan:id,amount:n},p.name+' settled — kept in history as paid');
+}
+
+document.getElementById('addBtn').onclick=function(){document.getElementById('addFrm').classList.toggle('on');};
+document.getElementById('fCancel').onclick=function(){document.getElementById('addFrm').classList.remove('on');};
+document.getElementById('fSave').onclick=function(){
+  var n=document.getElementById('fName').value.trim();
+  var a=parseFloat(document.getElementById('fAmt').value);
+  var s=document.getElementById('fStart').value;
+  var c=parseInt(document.getElementById('fN').value,10);
+  if(!n||!a||!s||!c){toast('Fill in all four fields');return;}
+  document.getElementById('addFrm').classList.remove('on');
+  ['fName','fAmt','fStart','fN'].forEach(function(x){document.getElementById(x).value='';});
+  call('add',{name:n,amount:a,start:s,n:c},n+' added');
+};
+document.getElementById('testMail').onclick=function(){
+  if(busy)return; lock(true);
+  api('mail').then(function(r){lock(false);toast(r.msg);})
+    .catch(function(e){lock(false);toast('Error: '+e.message);});
+};
+
+var saved=loadAuth();
+if(saved&&saved.p){AUTH=saved;boot();}else{showLock();}
+
+</script>
+</body></html>
