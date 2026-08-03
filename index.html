@@ -130,16 +130,22 @@ input,select{font:inherit;font-size:13px;padding:8px 10px;border:1px solid #d5d9
       <div class="plans" id="plans"></div>
       <div class="frm" id="addFrm">
         <div class="fld"><label>Name</label><input id="fName" placeholder="e.g. Contact"></div>
-        <div class="fld"><label>Per month</label><input id="fAmt" type="number" step="0.01" placeholder="1500"></div>
-        <div class="fld"><label>Starts</label><input id="fStart" type="month"></div>
-        <div class="fld"><label>Months</label><input id="fN" type="number" min="1" placeholder="12"></div>
+        <div class="fld"><label>Per month</label><input id="fAmt" type="number" inputmode="decimal" step="0.01" placeholder="1500"></div>
+        <div class="fld"><label>Starts</label>
+          <div style="display:flex;gap:6px">
+            <select id="fMon" style="flex:1.3"></select>
+            <select id="fYr" style="flex:1"></select></div></div>
+        <div class="fld"><label>Months</label><input id="fN" type="number" inputmode="numeric" min="1" placeholder="12"></div>
         <div class="fld" style="flex:0 0 auto;display:flex;align-items:flex-end;gap:7px">
           <button class="b pri" id="fSave">Add</button><button class="b" id="fCancel">Cancel</button></div>
       </div>
     </div>
 
     <div class="card">
-      <div class="hd"><h2>Schedule <span style="color:#9aa1ab;font-weight:500;text-transform:none;letter-spacing:0" id="cnt"></span></h2></div>
+      <div class="hd"><h2>Schedule <span style="color:#9aa1ab;font-weight:500;text-transform:none;letter-spacing:0" id="cnt"></span></h2>
+        <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#6b7280;cursor:pointer">
+          <input type="checkbox" id="editMode" style="width:16px;height:16px;accent-color:#b06f00;margin:0">
+          Edit amounts</label></div>
       <div style="overflow-x:auto"><table>
         <thead><tr id="thead"></tr></thead><tbody id="tb"></tbody></table></div>
       <div class="key">
@@ -147,6 +153,7 @@ input,select{font:inherit;font-size:13px;padding:8px 10px;border:1px solid #d5d9
         <span><i style="background:#2f7d5c"></i>paid</span>
         <span><i style="background:#1668b8"></i>cleared by early settlement</span>
         <span>right-hand box ticks the whole month</span>
+        <span id="editHint" style="display:none;color:#b06f00;font-weight:600">Edit mode on — tapping an amount changes it instead of marking it paid</span>
       </div>
     </div>
 
@@ -167,7 +174,15 @@ var API = 'https://script.google.com/macros/s/AKfycbzf_fyzLRZzx8fMTSs9hQOjdoDVW8
 /* ════════════════════════════════════════════════════════════════════════════════════ */
 
 var MN=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-var D=null, busy=false, AUTH=null, KEY='loanAuth_v4', _n=0;
+var D=null, busy=false, AUTH=null, KEY='loanAuth_v4', _n=0, EDIT=false;
+var MFULL=['January','February','March','April','May','June','July','August','September','October','November','December'];
+(function fillStartPickers(){
+  var mo=document.getElementById('fMon'), yr=document.getElementById('fYr'), now=new Date();
+  for(var i=0;i<12;i++){var o=document.createElement('option');o.value=('0'+(i+1)).slice(-2);
+    o.textContent=MFULL[i]; if(i===now.getMonth())o.selected=true; mo.appendChild(o);}
+  for(var y=now.getFullYear()-1;y<=now.getFullYear()+6;y++){var p=document.createElement('option');
+    p.value=y;p.textContent=y; if(y===now.getFullYear())p.selected=true; yr.appendChild(p);}
+})();
 
 /* Data calls: fetch() first — it sends NO cookies cross-origin, so Google
    cannot rewrite the URL to /u/1/ and the multi-account problem disappears.
@@ -325,6 +340,7 @@ function render(){
             :open+' of '+p.months.length+' left · ends '+lbl(p.months[p.months.length-1][0]))+'</div>'+
       (st?'<button class="b sm" data-undo="'+p.id+'">Undo settlement</button>'
          :(open>0?'<button class="b sm" data-set="'+p.id+'">Settle early</button>':''))+
+      (open>0?' <button class="b sm" data-amt="'+p.id+'" title="Change the monthly amount">Amount</button>':'')+
       ' <button class="b sm" data-del="'+p.id+'" title="Remove plan">&times;</button>';
     box.appendChild(d);
   });
@@ -358,13 +374,33 @@ function render(){
   document.getElementById('cnt').textContent=' — '+yms.length+' months';
 
   Array.prototype.forEach.call(document.querySelectorAll('[data-t]'),function(b){
-    b.onclick=function(){var k=b.getAttribute('data-t').split('|');
-      call('toggle',{plan:k[0],ym:k[1]});};});
+    b.onclick=function(){
+      var k=b.getAttribute('data-t').split('|');
+      if(!EDIT){ call('toggle',{plan:k[0],ym:k[1]}); return; }
+      var pl=null; D.plans.forEach(function(x){if(x.id===k[0])pl=x;});
+      var v=prompt('Amount for '+pl.name+' in '+lbl(k[1])+'\n\nEnter 0 to remove this month.',String(amtOf(pl,k[1])));
+      if(v===null)return;
+      var n=parseFloat(String(v).replace(/,/g,''));
+      if(isNaN(n)||n<0){toast('That is not a valid amount');return;}
+      call('setmonth',{plan:k[0],ym:k[1],amount:n},pl.name+' '+lbl(k[1])+' updated');
+    };});
   Array.prototype.forEach.call(document.querySelectorAll('[data-mo]'),function(b){
     b.onchange=function(){var ym=b.getAttribute('data-mo');
       call('month',{ym:ym,paid:b.checked?'1':'0'},lbl(ym)+(b.checked?' marked paid':' cleared'));};});
   Array.prototype.forEach.call(document.querySelectorAll('[data-set]'),function(b){
     b.onclick=function(){settle(b.getAttribute('data-set'));};});
+  Array.prototype.forEach.call(document.querySelectorAll('[data-amt]'),function(b){
+    b.onclick=function(){
+      var id=b.getAttribute('data-amt'), pl=null;
+      D.plans.forEach(function(x){if(x.id===id)pl=x;});
+      var open=pl.months.filter(function(m){return !isPaid(id,m[0]);});
+      if(!open.length){toast('Nothing left to change');return;}
+      var v=prompt('New monthly amount for '+pl.name+'.\n\nApplies to the '+open.length+' month(s) not yet paid. Months already ticked keep their amount.',String(open[0][1]));
+      if(v===null)return;
+      var n=parseFloat(String(v).replace(/,/g,''));
+      if(isNaN(n)||n<=0){toast('Enter an amount greater than zero');return;}
+      call('setplan',{plan:id,amount:n},pl.name+' set to '+money(n)+' a month');
+    };});
   Array.prototype.forEach.call(document.querySelectorAll('[data-undo]'),function(b){
     b.onclick=function(){if(confirm('Undo this settlement? Remaining months go back to unpaid.'))
       call('undo',{plan:b.getAttribute('data-undo')},'Settlement undone');};});
@@ -389,12 +425,22 @@ document.getElementById('fCancel').onclick=function(){document.getElementById('a
 document.getElementById('fSave').onclick=function(){
   var n=document.getElementById('fName').value.trim();
   var a=parseFloat(document.getElementById('fAmt').value);
-  var s=document.getElementById('fStart').value;
   var c=parseInt(document.getElementById('fN').value,10);
-  if(!n||!a||!s||!c){toast('Fill in all four fields');return;}
+  var s=document.getElementById('fYr').value+'-'+document.getElementById('fMon').value;
+  if(!n){toast('Give it a name');return;}
+  if(isNaN(a)||a<=0){toast('Enter a monthly amount greater than zero');return;}
+  if(isNaN(c)||c<1){toast('Enter how many months');return;}
+  var key=function(x){return x.toLowerCase().replace(/[^a-z0-9]+/g,'');};
+  var dup=null; D.plans.forEach(function(p){if(key(p.name)===key(n))dup=p;});
+  if(dup&&!confirm('You already have "'+dup.name+'".\n\nAdd these '+c+' payments on top of it instead of creating a second plan?'))return;
   document.getElementById('addFrm').classList.remove('on');
-  ['fName','fAmt','fStart','fN'].forEach(function(x){document.getElementById(x).value='';});
-  call('add',{name:n,amount:a,start:s,n:c},n+' added');
+  ['fName','fAmt','fN'].forEach(function(x){document.getElementById(x).value='';});
+  call('add',{name:n,amount:a,start:s,n:c},dup?('Added to '+dup.name):(n+' added'));
+};
+document.getElementById('editMode').onchange=function(){
+  EDIT=this.checked;
+  document.getElementById('editHint').style.display=EDIT?'':'none';
+  if(EDIT)toast('Edit mode on — tap an amount to change it');
 };
 document.getElementById('testMail').onclick=function(){
   if(busy)return; lock(true);
