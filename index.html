@@ -68,8 +68,21 @@ button.b.pri:hover{background:#33373f}
 button.b.sm{padding:3px 9px;font-size:11.5px;border-radius:6px}
 input,select{font:inherit;font-size:13px;padding:8px 10px;border:1px solid #d5d9df;border-radius:8px;
  background:#fff;color:#16181d;width:100%}
-.frm{display:none;gap:9px;flex-wrap:wrap;margin-top:13px;padding-top:13px;border-top:1px solid #eef0f2}
-.frm.on{display:flex}
+#veil{position:fixed;inset:0;background:rgba(16,18,22,.45);z-index:50;display:none;
+ align-items:center;justify-content:center;padding:16px;overflow-y:auto}
+#veil.on{display:flex}
+.modal{background:#fff;border-radius:14px;width:100%;max-width:420px;padding:20px 20px 18px;
+ box-shadow:0 18px 50px rgba(0,0,0,.28);max-height:92vh;overflow-y:auto}
+.modal h3{margin:0 0 3px;font-size:17px;font-weight:660;letter-spacing:-.2px}
+.modal .mnote{color:#6b7280;font-size:12.5px;margin:0 0 16px}
+.modal .fld{min-width:0;margin-bottom:13px}
+.modal .row2{display:flex;gap:9px}
+.modal .row2>*{flex:1;min-width:0}
+.mact{display:flex;gap:9px;margin-top:17px}
+.mact button{flex:1;padding:10px}
+.mx{position:absolute;top:11px;right:13px;border:0;background:none;font-size:22px;
+ color:#9aa1ab;cursor:pointer;line-height:1;padding:4px 8px}
+.mwrap{position:relative}
 .fld{flex:1;min-width:118px}
 .fld label{display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;
  color:#6b7280;font-weight:650;margin-bottom:4px}
@@ -128,17 +141,6 @@ input,select{font:inherit;font-size:13px;padding:8px 10px;border:1px solid #d5d9
     <div class="card">
       <div class="hd"><h2>Plans</h2><button class="b" id="addBtn">+ Add loan or service</button></div>
       <div class="plans" id="plans"></div>
-      <div class="frm" id="addFrm">
-        <div class="fld"><label>Name</label><input id="fName" placeholder="e.g. Contact"></div>
-        <div class="fld"><label>Per month</label><input id="fAmt" type="number" inputmode="decimal" step="0.01" placeholder="1500"></div>
-        <div class="fld"><label>Starts</label>
-          <div style="display:flex;gap:6px">
-            <select id="fMon" style="flex:1.3"></select>
-            <select id="fYr" style="flex:1"></select></div></div>
-        <div class="fld"><label>Months</label><input id="fN" type="number" inputmode="numeric" min="1" placeholder="12"></div>
-        <div class="fld" style="flex:0 0 auto;display:flex;align-items:flex-end;gap:7px">
-          <button class="b pri" id="fSave">Add</button><button class="b" id="fCancel">Cancel</button></div>
-      </div>
     </div>
 
     <div class="card">
@@ -165,6 +167,7 @@ input,select{font:inherit;font-size:13px;padding:8px 10px;border:1px solid #d5d9
     <div class="foot">Amounts in <span id="cur"></span> · due on the 1st · shared, saved on Google's servers</div>
   </div>
 </div>
+<div id="veil"><div class="modal mwrap" id="modal"></div></div>
 <div id="toast"></div>
 
 <script>
@@ -175,14 +178,9 @@ var API = 'https://script.google.com/macros/s/AKfycbzf_fyzLRZzx8fMTSs9hQOjdoDVW8
 
 var MN=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 var D=null, busy=false, AUTH=null, KEY='loanAuth_v4', _n=0, EDIT=false;
-var MFULL=['January','February','March','April','May','June','July','August','September','October','November','December'];
-(function fillStartPickers(){
-  var mo=document.getElementById('fMon'), yr=document.getElementById('fYr'), now=new Date();
-  for(var i=0;i<12;i++){var o=document.createElement('option');o.value=('0'+(i+1)).slice(-2);
-    o.textContent=MFULL[i]; if(i===now.getMonth())o.selected=true; mo.appendChild(o);}
-  for(var y=now.getFullYear()-1;y<=now.getFullYear()+6;y++){var p=document.createElement('option');
-    p.value=y;p.textContent=y; if(y===now.getFullYear())p.selected=true; yr.appendChild(p);}
-})();
+var MFULL=['January','February','March','April','May','June','July',
+           'August','September','October','November','December'];
+
 
 /* Data calls: fetch() first — it sends NO cookies cross-origin, so Google
    cannot rewrite the URL to /u/1/ and the multi-account problem disappears.
@@ -219,6 +217,77 @@ function api(action,params,noAuth){
   return viaFetch(url)
     .catch(function(){ return viaJsonp(url); })
     .then(function(d){ if(d&&d.error)throw new Error(d.error); return d; });
+}
+
+
+/* ── modal machinery ── */
+function closeModal(){
+  document.getElementById('veil').className='';
+  document.getElementById('modal').innerHTML='';
+}
+function openModal(html, onReady){
+  var m=document.getElementById('modal');
+  m.innerHTML='<button class="mx" id="mClose" aria-label="Close">&times;</button>'+html;
+  document.getElementById('veil').className='on';
+  document.getElementById('mClose').onclick=closeModal;
+  if(onReady)onReady();
+}
+function askAmount(title,note,initial,cb){
+  openModal('<h3>'+title+'</h3><p class="mnote">'+note+'</p>'+
+    '<div class="fld"><label>Amount in '+D.currency+'</label>'+
+    '<input id="aVal" type="number" inputmode="decimal" step="0.01" value="'+initial+'"></div>'+
+    '<div class="mact"><button class="b" id="aCancel">Cancel</button>'+
+    '<button class="b pri" id="aOk">Save</button></div>',
+    function(){
+      var i=document.getElementById('aVal');
+      setTimeout(function(){i.focus();i.select();},60);
+      document.getElementById('aCancel').onclick=closeModal;
+      document.getElementById('aOk').onclick=function(){
+        var n=parseFloat(String(i.value).replace(/,/g,''));
+        if(isNaN(n)||n<0){toast('Enter a valid amount');return;}
+        closeModal(); cb(n);
+      };
+      i.addEventListener('keydown',function(e){
+        if(e.key==='Enter'){e.preventDefault();document.getElementById('aOk').click();}});
+    });
+}
+function openAdd(){
+  var now=new Date(), mo='', yr='';
+  for(var i=0;i<12;i++)
+    mo+='<option value="'+('0'+(i+1)).slice(-2)+'"'+(i===now.getMonth()?' selected':'')+'>'+MFULL[i]+'</option>';
+  for(var y=now.getFullYear()-1;y<=now.getFullYear()+6;y++)
+    yr+='<option'+(y===now.getFullYear()?' selected':'')+'>'+y+'</option>';
+  openModal('<h3>Add loan or service</h3>'+
+    '<p class="mnote">If the name matches one you already have, the payments are added on top of it.</p>'+
+    '<div class="fld"><label>Name</label><input id="fName" placeholder="e.g. Contact"></div>'+
+    '<div class="fld"><label>Amount per month</label>'+
+    '<input id="fAmt" type="number" inputmode="decimal" step="0.01" placeholder="1500"></div>'+
+    '<div class="fld"><label>First payment</label><div class="row2">'+
+    '<select id="fMon">'+mo+'</select><select id="fYr">'+yr+'</select></div></div>'+
+    '<div class="fld"><label>How many months</label>'+
+    '<input id="fN" type="number" inputmode="numeric" min="1" placeholder="12"></div>'+
+    '<div class="mact"><button class="b" id="fCancel">Cancel</button>'+
+    '<button class="b pri" id="fSave">Add</button></div>',
+    function(){
+      setTimeout(function(){document.getElementById('fName').focus();},60);
+      document.getElementById('fCancel').onclick=closeModal;
+      document.getElementById('fSave').onclick=doAdd;
+    });
+}
+function doAdd(){
+  var n=document.getElementById('fName').value.trim();
+  var a=parseFloat(document.getElementById('fAmt').value);
+  var c=parseInt(document.getElementById('fN').value,10);
+  var s=document.getElementById('fYr').value+'-'+document.getElementById('fMon').value;
+  if(!n){toast('Give it a name');return;}
+  if(isNaN(a)||a<=0){toast('Enter a monthly amount greater than zero');return;}
+  if(isNaN(c)||c<1){toast('Enter how many months');return;}
+  var k=function(x){return x.toLowerCase().replace(/[^a-z0-9]+/g,'');};
+  var dup=null; D.plans.forEach(function(p){if(k(p.name)===k(n))dup=p;});
+  if(dup&&!confirm('You already have "'+dup.name+'".\n\nAdd these '+c+
+     ' payments on top of it instead of creating a second plan?'))return;
+  closeModal();
+  call('add',{name:n,amount:a,start:s,n:c},dup?('Added to '+dup.name):(n+' added'));
 }
 
 function money(n){return (Math.round(n*100)/100).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',');}
@@ -378,11 +447,9 @@ function render(){
       var k=b.getAttribute('data-t').split('|');
       if(!EDIT){ call('toggle',{plan:k[0],ym:k[1]}); return; }
       var pl=null; D.plans.forEach(function(x){if(x.id===k[0])pl=x;});
-      var v=prompt('Amount for '+pl.name+' in '+lbl(k[1])+'\n\nEnter 0 to remove this month.',String(amtOf(pl,k[1])));
-      if(v===null)return;
-      var n=parseFloat(String(v).replace(/,/g,''));
-      if(isNaN(n)||n<0){toast('That is not a valid amount');return;}
-      call('setmonth',{plan:k[0],ym:k[1],amount:n},pl.name+' '+lbl(k[1])+' updated');
+      askAmount(pl.name+' — '+lbl(k[1]),'Enter 0 to remove this month from the plan.',
+        amtOf(pl,k[1]),
+        function(n){ call('setmonth',{plan:k[0],ym:k[1],amount:n},pl.name+' '+lbl(k[1])+' updated'); });
     };});
   Array.prototype.forEach.call(document.querySelectorAll('[data-mo]'),function(b){
     b.onchange=function(){var ym=b.getAttribute('data-mo');
@@ -395,11 +462,11 @@ function render(){
       D.plans.forEach(function(x){if(x.id===id)pl=x;});
       var open=pl.months.filter(function(m){return !isPaid(id,m[0]);});
       if(!open.length){toast('Nothing left to change');return;}
-      var v=prompt('New monthly amount for '+pl.name+'.\n\nApplies to the '+open.length+' month(s) not yet paid. Months already ticked keep their amount.',String(open[0][1]));
-      if(v===null)return;
-      var n=parseFloat(String(v).replace(/,/g,''));
-      if(isNaN(n)||n<=0){toast('Enter an amount greater than zero');return;}
-      call('setplan',{plan:id,amount:n},pl.name+' set to '+money(n)+' a month');
+      askAmount('Change '+pl.name+' amount',
+        'Applies to the '+open.length+' month(s) not yet paid. Months already ticked keep what you paid.',
+        open[0][1],
+        function(n){ if(n<=0){toast('Enter an amount greater than zero');return;}
+          call('setplan',{plan:id,amount:n},pl.name+' set to '+money(n)+' a month'); });
     };});
   Array.prototype.forEach.call(document.querySelectorAll('[data-undo]'),function(b){
     b.onclick=function(){if(confirm('Undo this settlement? Remaining months go back to unpaid.'))
@@ -412,31 +479,17 @@ function render(){
 function settle(id){
   var p=null; D.plans.forEach(function(x){if(x.id===id)p=x;});
   var sched=0; p.months.forEach(function(m){if(!isPaid(id,m[0]))sched+=m[1];});
-  var a=prompt('Settling '+p.name+' early.\n\nRemaining on schedule: '+money(sched)+' '+D.currency+
-    '\nWhat did you actually pay? (early settlement is usually less)',String(Math.round(sched*100)/100));
-  if(a===null)return;
-  var n=parseFloat(String(a).replace(/,/g,''));
-  if(isNaN(n)||n<0){toast('That is not a valid amount');return;}
-  call('settle',{plan:id,amount:n},p.name+' settled — kept in history as paid');
+  askAmount('Settle '+p.name+' early',
+    'Remaining on schedule is '+money(sched)+' '+D.currency+
+    '. Enter what you actually paid — early settlement is usually less.',
+    Math.round(sched*100)/100,
+    function(n){ call('settle',{plan:id,amount:n},p.name+' settled — kept in history as paid'); });
 }
 
-document.getElementById('addBtn').onclick=function(){document.getElementById('addFrm').classList.toggle('on');};
-document.getElementById('fCancel').onclick=function(){document.getElementById('addFrm').classList.remove('on');};
-document.getElementById('fSave').onclick=function(){
-  var n=document.getElementById('fName').value.trim();
-  var a=parseFloat(document.getElementById('fAmt').value);
-  var c=parseInt(document.getElementById('fN').value,10);
-  var s=document.getElementById('fYr').value+'-'+document.getElementById('fMon').value;
-  if(!n){toast('Give it a name');return;}
-  if(isNaN(a)||a<=0){toast('Enter a monthly amount greater than zero');return;}
-  if(isNaN(c)||c<1){toast('Enter how many months');return;}
-  var key=function(x){return x.toLowerCase().replace(/[^a-z0-9]+/g,'');};
-  var dup=null; D.plans.forEach(function(p){if(key(p.name)===key(n))dup=p;});
-  if(dup&&!confirm('You already have "'+dup.name+'".\n\nAdd these '+c+' payments on top of it instead of creating a second plan?'))return;
-  document.getElementById('addFrm').classList.remove('on');
-  ['fName','fAmt','fN'].forEach(function(x){document.getElementById(x).value='';});
-  call('add',{name:n,amount:a,start:s,n:c},dup?('Added to '+dup.name):(n+' added'));
-};
+document.getElementById('addBtn').onclick=openAdd;
+document.getElementById('veil').onclick=function(e){if(e.target.id==='veil')closeModal();};
+document.addEventListener('keydown',function(e){
+  if(e.key==='Escape'&&document.getElementById('veil').className==='on')closeModal();});
 document.getElementById('editMode').onchange=function(){
   EDIT=this.checked;
   document.getElementById('editHint').style.display=EDIT?'':'none';
