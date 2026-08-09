@@ -59,6 +59,11 @@ tr.next-row td{background:#fff8e4}
 .cellbtn.n{cursor:default;color:#d3d7dc}
 .cellbtn.n:hover{background:none}
 .tot{font-weight:680;padding:8px 6px}
+.due{font-weight:680;padding:8px 6px;color:#b3261e}
+.due.zero{color:#b8bec6;font-weight:500}
+tr.sumrow td{border-top:2px solid #d5d9df;border-bottom:0;padding:10px 6px;
+ font-weight:680;background:#fafbfc}
+tr.sumrow td.lab{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280}
 .rowchk{width:19px;height:19px;accent-color:#2f7d5c;cursor:pointer;margin:0}
 button.b{border:1px solid #d5d9df;background:#fff;border-radius:8px;padding:6px 12px;font-size:12.5px;
  font-family:inherit;color:#374151;cursor:pointer;font-weight:550}
@@ -416,11 +421,13 @@ function render(){
 
   document.getElementById('thead').innerHTML='<th>Month</th>'+
     D.plans.map(function(p){return '<th>'+p.name+'</th>';}).join('')+
-    '<th>Total</th><th class="hide-sm">Left after</th><th class="c">All</th>';
+    '<th>Total</th><th>To pay</th><th class="hide-sm">Left after</th><th class="c">All</th>';
   var tb=document.getElementById('tb'); tb.innerHTML=''; var run=0;
   yms.forEach(function(ym){
-    var tot=0,allPaid=true,any=false;
-    D.plans.forEach(function(p){var a=amtOf(p,ym); if(a>0){any=true;tot+=a; if(!isPaid(p.id,ym))allPaid=false;}});
+    var tot=0,due=0,allPaid=true,any=false;
+    D.plans.forEach(function(p){var a=amtOf(p,ym);
+      if(a>0){any=true;tot+=a;
+        if(!isPaid(p.id,ym)){allPaid=false;due+=a;}}});
     if(!any)return;
     run+=tot;
     var tr=document.createElement('tr');
@@ -435,11 +442,22 @@ function render(){
          '<span class="box"></span><span class="num">'+money(a)+'</span></button></td>';
     });
     h+='<td class="tot">'+money(tot)+'</td>'+
+       '<td class="due'+(due>0?'':' zero')+'">'+money(due)+'</td>'+
        '<td class="hide-sm" style="color:#8b919a;padding:8px 6px">'+money0(grand-run)+'</td>'+
        '<td class="c" style="padding:8px 6px"><input type="checkbox" class="rowchk" data-mo="'+ym+'"'+
        (allPaid?' checked':'')+' title="Mark this whole month paid"></td>';
     tr.innerHTML=h; tb.appendChild(tr);
   });
+  var fr=document.createElement('tr'); fr.className='sumrow';
+  var fh='<td class="lab">Still owed</td>';
+  D.plans.forEach(function(p){
+    var o=0; p.months.forEach(function(m){ if(!isPaid(p.id,m[0])) o+=m[1]; });
+    fh+='<td'+(o>0?'':' style="color:#b8bec6;font-weight:500"')+'>'+money0(o)+'</td>';
+  });
+  fh+='<td>'+money0(grand)+'</td><td style="color:#b3261e">'+money0(left)+'</td>'+
+      '<td class="hide-sm"></td><td class="c"></td>';
+  fr.innerHTML=fh; tb.appendChild(fr);
+
   document.getElementById('cnt').textContent=' — '+yms.length+' months';
 
   Array.prototype.forEach.call(document.querySelectorAll('[data-t]'),function(b){
