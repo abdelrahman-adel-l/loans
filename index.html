@@ -1,6 +1,14 @@
 <!DOCTYPE html>
 <html><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Loan Installments</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#16181d">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Loans">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" href="icon-192.png">
 <style>
 :root{color-scheme:light}
 *{box-sizing:border-box}
@@ -88,6 +96,8 @@ input,select{font:inherit;font-size:13px;padding:8px 10px;border:1px solid #d5d9
 .mx{position:absolute;top:11px;right:13px;border:0;background:none;font-size:22px;
  color:#9aa1ab;cursor:pointer;line-height:1;padding:4px 8px}
 .mwrap{position:relative}
+#install{display:none;margin-left:8px}
+#install.on{display:inline-block}
 .fld{flex:1;min-width:118px}
 .fld label{display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;
  color:#6b7280;font-weight:650;margin-bottom:4px}
@@ -144,7 +154,7 @@ input,select{font:inherit;font-size:13px;padding:8px 10px;border:1px solid #d5d9
     </div>
 
     <div class="card">
-      <div class="hd"><h2>Plans</h2><button class="b" id="addBtn">+ Add loan or service</button></div>
+      <div class="hd"><h2>Plans</h2><span><button class="b" id="addBtn">+ Add loan or service</button><button class="b pri" id="install">Install app</button></span></div>
       <div class="plans" id="plans"></div>
     </div>
 
@@ -518,6 +528,35 @@ document.getElementById('testMail').onclick=function(){
   api('mail').then(function(r){lock(false);toast(r.msg);})
     .catch(function(e){lock(false);toast('Error: '+e.message);});
 };
+
+/* install as an Android app */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('sw.js').catch(function (e) {
+      console.log('SW registration failed:', e.message);
+    });
+  });
+}
+var deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', function (e) {
+  e.preventDefault();
+  deferredPrompt = e;
+  document.getElementById('install').classList.add('on');
+});
+document.getElementById('install').onclick = function () {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  deferredPrompt.userChoice.then(function (c) {
+    if (c.outcome === 'accepted') {
+      document.getElementById('install').classList.remove('on');
+      toast('Installing - look for the Loans icon');
+    }
+    deferredPrompt = null;
+  });
+};
+window.addEventListener('appinstalled', function () {
+  document.getElementById('install').classList.remove('on');
+});
 
 var saved=loadAuth();
 if(saved&&saved.p){AUTH=saved;boot();}else{showLock();}
